@@ -19,11 +19,10 @@
 
 #include <gsl/gsl_assert> // for Expects
 #include <gsl/gsl_byte>   // for byte
-#include <gsl/gsl_util>   // for narrow_cast, narrow
 
-#include <array>     // for array
-#include <cstddef>   // for ptrdiff_t, size_t, nullptr_t
-#include <iterator>  // for reverse_iterator, distance, random_access_...
+#include <array>       // for array
+#include <cstddef>     // for ptrdiff_t, size_t, nullptr_t
+#include <iterator>    // for reverse_iterator, distance, random_access_...
 #include <type_traits> // for enable_if_t, declval, is_convertible, inte...
 
 #if defined(_MSC_VER) && !defined(__clang__)
@@ -403,9 +402,7 @@ public:
     using difference_type = std::ptrdiff_t;
 
     using iterator = details::span_iterator<ElementType>;
-    using const_iterator = details::span_iterator<const ElementType>;
     using reverse_iterator = std::reverse_iterator<iterator>;
-    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
 #if defined(GSL_USE_STATIC_CONSTEXPR_WORKAROUND)
     static constexpr const size_type extent{Extent};
@@ -441,18 +438,21 @@ public:
         : storage_(KnownNotNull{arr + 0}, details::extent_type<N>())
     {}
 
-    template <std::size_t N,
-              std::enable_if_t<details::is_allowed_extent_conversion<N, Extent>::value, int> = 0>
-    constexpr span(std::array<element_type, N>& arr) noexcept
+    template <
+        class T, std::size_t N,
+        std::enable_if_t<(details::is_allowed_extent_conversion<N, Extent>::value &&
+                          details::is_allowed_element_type_conversion<T, element_type>::value),
+                         int> = 0>
+    constexpr span(std::array<T, N>& arr) noexcept
         : storage_(KnownNotNull{arr.data()}, details::extent_type<N>())
     {}
 
-    template <std::size_t N,
-              std::enable_if_t<(details::is_allowed_extent_conversion<N, Extent>::value &&
-                                details::is_allowed_element_type_conversion<const value_type,
-                                                                            element_type>::value),
-                               int> = 0>
-    constexpr span(const std::array<value_type, N>& arr) noexcept
+    template <class T, std::size_t N,
+              std::enable_if_t<
+                  (details::is_allowed_extent_conversion<N, Extent>::value &&
+                   details::is_allowed_element_type_conversion<const T, element_type>::value),
+                  int> = 0>
+    constexpr span(const std::array<T, N>& arr) noexcept
         : storage_(KnownNotNull{arr.data()}, details::extent_type<N>())
     {}
 
@@ -462,7 +462,9 @@ public:
               class = std::enable_if_t<
                   !details::is_span<Container>::value && !details::is_std_array<Container>::value &&
                   std::is_pointer<decltype(std::declval<Container&>().data())>::value &&
-                  std::is_convertible<std::remove_pointer_t<decltype(std::declval<Container&>().data())>(*)[], element_type(*)[]>::value>>
+                  std::is_convertible<
+                      std::remove_pointer_t<decltype(std::declval<Container&>().data())> (*)[],
+                      element_type (*)[]>::value>>
     constexpr span(Container& cont) noexcept : span(cont.data(), cont.size())
     {}
 
@@ -471,7 +473,9 @@ public:
                   std::is_const<element_type>::value && !details::is_span<Container>::value &&
                   !details::is_std_array<Container>::value &&
                   std::is_pointer<decltype(std::declval<const Container&>().data())>::value &&
-                  std::is_convertible<std::remove_pointer_t<decltype(std::declval<const Container&>().data())>(*)[], element_type(*)[]>::value>>
+                  std::is_convertible<std::remove_pointer_t<
+                                          decltype(std::declval<const Container&>().data())> (*)[],
+                                      element_type (*)[]>::value>>
     constexpr span(const Container& cont) noexcept : span(cont.data(), cont.size())
     {}
 
@@ -500,8 +504,8 @@ public:
     template <std::size_t Count>
     // clang-format off
     GSL_SUPPRESS(bounds.1) // NO-FORMAT: attribute
-    // clang-format on
-    constexpr span<element_type, Count> last() const noexcept
+        // clang-format on
+        constexpr span<element_type, Count> last() const noexcept
     {
         Expects(Count <= size());
         return {data() + (size() - Count), Count};
@@ -510,9 +514,9 @@ public:
     template <std::size_t Offset, std::size_t Count = dynamic_extent>
     // clang-format off
     GSL_SUPPRESS(bounds.1) // NO-FORMAT: attribute
-    // clang-format on
-    constexpr auto subspan() const noexcept ->
-    typename details::calculate_subspan_type<ElementType, Extent, Offset, Count>::type
+        // clang-format on
+        constexpr auto subspan() const noexcept ->
+        typename details::calculate_subspan_type<ElementType, Extent, Offset, Count>::type
     {
         Expects((size() >= Offset) && (Count == dynamic_extent || (Count <= size() - Offset)));
 
@@ -577,40 +581,24 @@ public:
     constexpr iterator begin() const noexcept
     {
         const auto data = storage_.data();
+        // clang-format off
+        GSL_SUPPRESS(bounds.1) // NO-FORMAT: attribute
+        // clang-format on
         return {data, data + size(), data};
     }
 
     constexpr iterator end() const noexcept
     {
         const auto data = storage_.data();
-        const auto endData = data + storage_.size();
-        return {data, endData, endData};
-    }
-
-    constexpr const_iterator cbegin() const noexcept
-    {
-        const auto data = storage_.data();
-        return {data, data + size(), data};
-    }
-
-    constexpr const_iterator cend() const noexcept
-    {
-        const auto data = storage_.data();
+        // clang-format off
+        GSL_SUPPRESS(bounds.1) // NO-FORMAT: attribute
+        // clang-format on
         const auto endData = data + storage_.size();
         return {data, endData, endData};
     }
 
     constexpr reverse_iterator rbegin() const noexcept { return reverse_iterator{end()}; }
     constexpr reverse_iterator rend() const noexcept { return reverse_iterator{begin()}; }
-
-    constexpr const_reverse_iterator crbegin() const noexcept
-    {
-        return const_reverse_iterator{cend()};
-    }
-    constexpr const_reverse_iterator crend() const noexcept
-    {
-        return const_reverse_iterator{cbegin()};
-    }
 
 #ifdef _MSC_VER
     // Tell MSVC how to unwrap spans in range-based-for
@@ -673,7 +661,8 @@ private:
 
     template <std::size_t CallerExtent>
     constexpr span<element_type, dynamic_extent> make_subspan(size_type offset, size_type count,
-                                                              subspan_selector<CallerExtent>) const noexcept
+                                                              subspan_selector<CallerExtent>) const
+        noexcept
     {
         const span<element_type, dynamic_extent> tmp(*this);
         return tmp.subspan(offset, count);
