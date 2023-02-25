@@ -263,7 +263,7 @@ not_null& operator+=(std::ptrdiff_t) = delete;
 not_null& operator-=(std::ptrdiff_t) = delete;
 ```
 
-Explicitly deleted operators. Pointers point to single objects ([I.13: Do not pass an array as a single pointer](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#i13-do-not-pass-an-array-as-a-single-pointer)), so don't allow these operators.
+Explicitly deleted operators. Pointers point to single objects ([I.13: Do not pass an array as a single pointer](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Ri-array)), so don't allow these operators.
 
 ##### Observers
 
@@ -285,7 +285,7 @@ Dereference the underlying pointer.
 void operator[](std::ptrdiff_t) const = delete;
 ```
 
-Array index operator is explicitly deleted. Pointers point to single objects ([I.13: Do not pass an array as a single pointer](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#i13-do-not-pass-an-array-as-a-single-pointer)), so don't allow treating them as an array.
+Array index operator is explicitly deleted. Pointers point to single objects ([I.13: Do not pass an array as a single pointer](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Ri-array)), so don't allow treating them as an array.
 
 #### Non-member functions
 
@@ -347,7 +347,7 @@ template <class T>
 not_null<T> operator+(std::ptrdiff_t, const not_null<T>&) = delete;
 ```
 
-Addition and subtraction are explicitly deleted. Pointers point to single objects ([I.13: Do not pass an array as a single pointer](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#i13-do-not-pass-an-array-as-a-single-pointer)), so don't allow these operators.
+Addition and subtraction are explicitly deleted. Pointers point to single objects ([I.13: Do not pass an array as a single pointer](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Ri-array)), so don't allow these operators.
 
 ##### STL integration
 
@@ -485,6 +485,9 @@ constexpr span(const span<OtherElementType, OtherExtent>& other) noexcept;
 Constructs a `span` from another `span`. This constructor is available if `OtherExtent == Extent || Extent ==`[`gsl::dynamic_extent`](#user-content-H-span_ext-dynamic_extent)` || OtherExtent ==`[`gsl::dynamic_extent`](#user-content-H-span_ext-dynamic_extent)
 and if `ElementType` and `OtherElementType` are compatible.
 
+If `Extent !=`[`gsl::dynamic_extent`](#user-content-H-span_ext-dynamic_extent) and `OtherExtent ==`[`gsl::dynamic_extent`](#user-content-H-span_ext-dynamic_extent),
+then the constructor [`Expects`](#user-content-H-assert-expects) that `other.size() == Extent`.
+
 ```cpp
 constexpr span& operator=(const span& other) noexcept = default;
 ```
@@ -596,7 +599,7 @@ Converts a `span` into a `span` of `byte`s.
 
 ## <a name="H-span_ext" />`<span_ext>`
 
-This files is a companion for and included by [`<span>`](#user-content-H-span).
+This file is a companion for and included by [`<gsl/span>`](#user-content-H-span), and should not be used on its own. It contains useful features that aren't part of the `std::span` API as found inside the STL `<span>` header (with the exception of [`gsl::dynamic_extent`](#user-content-H-span_ext-dynamic_extent), which is included here due to implementation constraints).
 
 - [`gsl::dynamic_extent`](#user-content-H-span_ext-dynamic_extent)
 - [`gsl::span`](#user-content-H-span_ext-span)
@@ -608,7 +611,9 @@ This files is a companion for and included by [`<span>`](#user-content-H-span).
 
 ### <a name="H-span_ext-dynamic_extent" />`gsl::dynamic_extent`
 
-Defines the extent value to be used by all `gsl::span` with dynamic extent.
+Defines the extent value to be used by all `gsl::span` with dynamic extent. 
+
+Note: `std::dynamic_extent` is exposed by the STL `<span>` header and so ideally `gsl::dynamic_extent` would be under [`<gsl/span>`](#user-content-H-span), but to avoid cyclic dependency issues it is under `<span_ext>` instead.
 
 ### <a name="H-span_ext-span" />`gsl::span`
 
