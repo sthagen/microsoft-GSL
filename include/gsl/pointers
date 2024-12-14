@@ -75,7 +75,7 @@ using std::unique_ptr;
 // T must be a pointer type
 // - disallow construction from any type other than pointer type
 //
-template <class T, class = std::enable_if_t<std::is_pointer<T>::value>>
+template <class T, std::enable_if_t<std::is_pointer<T>::value, bool> = true>
 using owner = T;
 
 //
@@ -117,7 +117,7 @@ public:
     not_null(const not_null& other) = default;
     not_null& operator=(const not_null& other) = default;
     constexpr details::value_or_reference_return_t<T> get() const
-        noexcept(noexcept(details::value_or_reference_return_t<T>{std::declval<T&>()}))
+        noexcept(noexcept(details::value_or_reference_return_t<T>(std::declval<T&>())))
     {
         return ptr_;
     }
@@ -139,9 +139,17 @@ public:
     not_null& operator-=(std::ptrdiff_t) = delete;
     void operator[](std::ptrdiff_t) const = delete;
 
+    void swap(not_null<T>& other) { std::swap(ptr_, other.ptr_); }
+
 private:
     T ptr_;
 };
+
+template <typename T, typename = std::enable_if_t<std::is_move_assignable<T>::value && std::is_move_constructible<T>::value>>
+void swap(not_null<T>& a, not_null<T>& b)
+{
+    a.swap(b);
+}
 
 template <class T>
 auto make_not_null(T&& t) noexcept
