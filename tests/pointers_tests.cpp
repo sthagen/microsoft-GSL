@@ -2,6 +2,7 @@
 
 #include <gsl/pointers>
 
+#include <functional>
 #include <memory>
 #include <type_traits>
 #include <utility>
@@ -43,6 +44,8 @@ TEST(pointers_test, swap)
         gsl::not_null<std::unique_ptr<int>> a(std::make_unique<int>(0));
         gsl::not_null<std::unique_ptr<int>> b(std::make_unique<int>(1));
 
+        static_assert(noexcept(gsl::swap(a, b)), "not null unique_ptr should be noexcept-swappable");
+
         EXPECT_TRUE(*a == 0);
         EXPECT_TRUE(*b == 1);
 
@@ -61,6 +64,8 @@ TEST(pointers_test, swap)
     {
         gsl::strict_not_null<std::unique_ptr<int>> a{std::make_unique<int>(0)};
         gsl::strict_not_null<std::unique_ptr<int>> b{std::make_unique<int>(1)};
+
+        static_assert(noexcept(gsl::swap(a, b)), "strict not null unique_ptr should be noexcept-swappable");
 
         EXPECT_TRUE(*a == 0);
         EXPECT_TRUE(*b == 1);
@@ -92,6 +97,21 @@ TEST(pointers_test, member_types)
 {
     static_assert(std::is_same<gsl::not_null<int*>::element_type, int*>::value,
                   "check member type: element_type");
+}
+
+TEST(pointers_test, hash_noexcept_compiles)
+{
+    {
+        using Key = gsl::not_null<std::shared_ptr<int>>;
+        static_assert(noexcept(std::hash<Key>{}(std::declval<Key>())),
+                      "gsl::not_null hash operator must be noexcept");
+    }
+
+    {
+        using Key = gsl::strict_not_null<std::shared_ptr<int>>;
+        static_assert(noexcept(std::hash<Key>{}(std::declval<Key>())),
+                      "gsl::strict_not_null hash operator must be noexcept");
+    }
 }
 
 } // namespace

@@ -145,14 +145,14 @@ public:
     not_null& operator-=(std::ptrdiff_t) = delete;
     void operator[](std::ptrdiff_t) const = delete;
 
-    void swap(not_null<T>& other) { std::swap(ptr_, other.ptr_); }
+    void swap(not_null<T>& other) noexcept { std::swap(ptr_, other.ptr_); }
 
 private:
     T ptr_;
 };
 
 template <typename T, std::enable_if_t<std::is_move_assignable<T>::value && std::is_move_constructible<T>::value, bool> = true>
-void swap(not_null<T>& a, not_null<T>& b)
+void swap(not_null<T>& a, not_null<T>& b) noexcept
 {
     a.swap(b);
 }
@@ -235,7 +235,7 @@ not_null<T> operator+(std::ptrdiff_t, const not_null<T>&) = delete;
 template <class T, class U = typename T::element_type, bool = std::is_default_constructible<std::hash<U>>::value>
 struct not_null_hash
 {
-    std::size_t operator()(const T& value) const { return std::hash<U>{}(value.get()); }
+    std::size_t operator()(const T& value) const noexcept { return std::hash<U>{}(value.get()); }
 };
 
 template <class T, class U>
