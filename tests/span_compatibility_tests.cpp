@@ -601,6 +601,8 @@ static_assert(std::is_same<gsl::span<const int, 3>::const_reference, const int&>
               "span<const int, 3>::const_reference should be const int&");
 
 // assertions for span_iterator
+static_assert(std::is_convertible<gsl::span<int>::iterator, gsl::span<const int>::iterator>::value,
+              "span<int>::iterator should be implicitly convertible to span<const int>::iterator");
 static_assert(std::is_same<std::iterator_traits<gsl::span<int>::iterator>::pointer, int*>::value,
               "span<int>::iterator's pointer should be int*");
 static_assert(
@@ -651,6 +653,19 @@ static_assert(std::is_trivially_copyable<gsl::span<const int, 3>>::value,
               "span<const int, 3> should be trivially copyable");
 static_assert(std::is_trivially_copyable<gsl::span<const int, 3>::iterator>::value,
               "span<const int, 3>::iterator should be trivially copyable");
+
+static_assert(!std::is_constructible<gsl::span<int>::iterator, gsl::span<int>>::value,
+              "span<int>::iterator should not be constructible from span<int>");
+static_assert(!std::is_constructible<gsl::span<int>::iterator, int*, int*, int*>::value,
+              "span<int>::iterator should not be constructible from an arbitrary pointer triple");
+static_assert(!std::is_constructible<gsl::span<const int>::iterator, gsl::span<const int>>::value,
+              "span<const int>::iterator should not be constructible from span<const int>");
+static_assert(
+    !std::is_constructible<gsl::span<const int>::iterator, const int*, const int*,
+                           const int*>::value,
+    "span<const int>::iterator should not be constructible from an arbitrary pointer triple");
+static_assert(std::is_copy_constructible<gsl::span<int>::iterator>::value,
+              "span<int>::iterator should remain copy constructible");
 
 // nothrow constructible assertions
 static_assert(std::is_nothrow_constructible<gsl::span<int>, int*, std::size_t>::value,

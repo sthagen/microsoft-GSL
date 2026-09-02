@@ -16,6 +16,23 @@
 
 static_assert(sizeof(gsl::dyn_array<int>) == 2 * sizeof(void*),
               "gsl::dyn_array (with the default allocator) should be 16 bytes");
+static_assert(
+    std::is_convertible<gsl::dyn_array<int>::iterator, gsl::dyn_array<int>::const_iterator>::value,
+    "gsl::dyn_array iterator should be implicitly convertible to const_iterator");
+static_assert(!std::is_constructible<gsl::dyn_array<int>::iterator, gsl::dyn_array<int>&>::value,
+              "dyn_array<int>::iterator should not be constructible from dyn_array<int>");
+static_assert(
+    !std::is_constructible<gsl::dyn_array<int>::iterator, int*, std::size_t, std::size_t>::value,
+    "dyn_array<int>::iterator should not be constructible from an arbitrary state triple");
+static_assert(
+    !std::is_constructible<gsl::dyn_array<int>::const_iterator, const gsl::dyn_array<int>&>::value,
+    "dyn_array<int>::const_iterator should not be constructible from dyn_array<int>");
+static_assert(!std::is_constructible<gsl::dyn_array<int>::const_iterator, const int*, std::size_t,
+                                     std::size_t>::value,
+              "dyn_array<int>::const_iterator should not be constructible from an arbitrary state "
+              "triple");
+static_assert(std::is_copy_constructible<gsl::dyn_array<int>::iterator>::value,
+              "dyn_array<int>::iterator should remain copy constructible");
 
 #if defined(__cpp_lib_concepts) && (__cpp_lib_concepts >= 202002L)
 static_assert(std::input_iterator<gsl::dyn_array<int>::iterator>,
@@ -189,6 +206,10 @@ TEST(dyn_array_tests, ranges)
 #endif /* __cpp_lib_ranges >= 201911L */
 
 #if defined(__cpp_lib_constexpr_dynamic_alloc) && (__cpp_lib_constexpr_dynamic_alloc >= 201907L)
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpadded"
+#endif // defined(__clang__)
 template <typename T, unsigned N>
 struct ConstexprAllocator
 {
@@ -218,6 +239,9 @@ struct ConstexprAllocator
 
     constexpr void deallocate(value_type*, std::size_t) noexcept {}
 };
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif // defined(__clang__)
 
 template <typename T1, unsigned N1, typename T2, unsigned N2>
 constexpr auto operator==(const ConstexprAllocator<T1, N1>& lhs,
